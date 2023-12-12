@@ -10,7 +10,7 @@ def get_requirements(requirements_path:str) -> List[str]:
 
 setup(
 name = "store sales forecasting",
-version = 0.0.1,
+version = "0.0.1",
 author = "Rauhan Ahmed Siddiqui",
 author_email = "rauhaan.siddiqui@gmail.com",
 packages = find_packages(),
