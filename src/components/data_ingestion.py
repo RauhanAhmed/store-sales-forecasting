@@ -52,6 +52,7 @@ class DataIngestion:
             logging.info(">>> DATA INGESTION COMPLETE <<<")
         
         except Exception as e:
+            logging.info(CustomException(e))
             print(CustomException(e))
 
 if __name__ == "__main__":
