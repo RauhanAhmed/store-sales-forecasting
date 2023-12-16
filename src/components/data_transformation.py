@@ -5,6 +5,9 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import os
+import warnings
+warnings.filterwarnings(action = "ignore")
+
 
 @dataclass
 class DataTransformationConfig:
@@ -98,8 +101,6 @@ class DataTransformation:
         except Exception as e:
             logging.info(CustomException(e))
             print(CustomException(e))
-
-
 
 if __name__ == "__main__":
     datatransformation = DataTransformation()

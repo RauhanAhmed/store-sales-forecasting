@@ -42,7 +42,7 @@ class DataIngestion:
             stores.drop("_id", axis = 1, inplace = True)
             holidays.drop("_id", axis = 1, inplace = True)
 
-            os.makedirs(self.dataingestionconfig.artifacts_dir)
+            os.makedirs(self.dataingestionconfig.artifacts_dir, exist_ok = True)
             data.to_csv(self.dataingestionconfig.raw_data)
             oil.to_csv(self.dataingestionconfig.oil)
             stores.to_csv(self.dataingestionconfig.stores)
