@@ -5,4 +5,5 @@ hampel
 darts
 pymongo
 python-dotenv
+dvc
 -e .
