@@ -14,5 +14,5 @@ version = "0.0.1",
 author = "Rauhan Ahmed Siddiqui",
 author_email = "rauhaan.siddiqui@gmail.com",
 packages = find_packages(),
-requires = get_requirements(r"requirements.txt")
+install_requires = get_requirements(r"requirements.txt")
 )
