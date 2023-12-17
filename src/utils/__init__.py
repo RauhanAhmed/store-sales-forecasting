@@ -1,4 +1,4 @@
-from datetime.datetime import Timestamp
+from pandas import Timestamp
 from datetime import timedelta
 from darts import TimeSeries
 import pandas as pd
