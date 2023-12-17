@@ -1,3 +1,4 @@
+bentoml
 pandas
 numpy
 scikit-learn
