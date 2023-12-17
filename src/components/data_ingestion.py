@@ -61,7 +61,3 @@ class DataIngestion:
         except Exception as e:
             logging.info(CustomException(e))
             print(CustomException(e))
-
-if __name__ == "__main__":
-    dataingestion = DataIngestion()
-    dataingestion.load_dataset()

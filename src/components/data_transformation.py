@@ -201,9 +201,3 @@ class DataTransformation:
         except Exception as e:
             logging.info(CustomException(e))
             print(CustomException(e))
-
-if __name__ == "__main__":
-    datatransformation = DataTransformation()
-    datatransformation.transform_data()
-    datatransformation.split_dataset(number_of_test_days = 15)
-    datatransformation.transform_data()
