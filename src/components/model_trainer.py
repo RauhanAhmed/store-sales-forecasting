@@ -29,7 +29,7 @@ class ModelTrainer:
             covariates = joblib.load(self.modeltrainerconfig.covariates)
 
             logging.info("training LightGBM Model for producing oil forecasts")
-            series = covariates[(1, "AUTOMOTIVE")]["dcoilwtico"]
+            series = covariates[str((1, "AUTOMOTIVE"))]["dcoilwtico"]
             oil_model = LightGBMModel(
                 lags = 25,
                 output_chunk_length = 1,
