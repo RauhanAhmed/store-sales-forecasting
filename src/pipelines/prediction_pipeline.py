@@ -34,9 +34,7 @@ class PredictionPipeline:
 
             # generating new past covariates for final model
             covariate = generate_covariates(
-                store_nbr = store_nbr,
-                family = family,
-                horizon = 15,
+                horizon = horizon,
                 onpromotion = onpromotion,
                 oil_forecasts = oil_forecasts,
                 is_holiday = is_holiday,
@@ -46,12 +44,13 @@ class PredictionPipeline:
             series_name = str((store_nbr, family))
             new_covariates = covariates[series_name].append(covariate)
 
+            # generating sales predictions for the supplied forecast horizon
             predictions = trained_model.predict(
-                n = 15,
+                n = horizon,
                 series = series_name,
                 past_covariates = new_covariates
             )
 
-            return predictions
+            return [round(x, 2) for x in predictions.pd_series().list()]
         except Exception as e:
             print(CustomException(e))
