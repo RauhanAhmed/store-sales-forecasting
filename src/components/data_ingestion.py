@@ -21,6 +21,11 @@ class DataIngestion:
         self.dataingestionconfig = DataIngestionConfig()
 
     def load_dataset(self):
+
+        """
+        This function is responsible for loading dataset from the MongoDB Database
+        """
+
         logging.info(">>> DATA INGESTION STARTED <<<")
         try:
             load_dotenv(self.dataingestionconfig.env_file_path)

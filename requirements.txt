@@ -6,4 +6,5 @@ darts
 pymongo
 python-dotenv
 dvc
+joblib
 -e .
