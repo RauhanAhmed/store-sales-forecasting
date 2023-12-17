@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from hampel import hampel
 from darts import TimeSeries
 from sklearn.feature_selection import VarianceThreshold
-from joblib import joblib
+import joblib
 import pandas as pd
 import numpy as np
 import os
@@ -32,10 +32,12 @@ class DataTransformation:
         logging.info(">>> DATA TRANSFORMATION STARTED <<<")
 
     def integrate_data(self):
+        
         """
         Function responsible for integrating the datasets without any inconsistencies
         """
-        logging.info("integrating datasets")
+        
+        logging.info("executing integrate_data function")
         try:
             logging.info("handling missing values")
 
@@ -92,9 +94,12 @@ class DataTransformation:
             print(CustomException(e))
 
     def split_data(self, number_of_test_days = 15):
+        
         """
         Function responsible for splitting the data into train and test sets
         """
+
+        logging.info("executing split_data function")
         try:     
             logging.info("performing data split for cross-validation")
 
@@ -117,10 +122,13 @@ class DataTransformation:
             print(CustomException(e))
 
     def transform_data(self):
+        
         """
         Function responsible for creating Darts TimeSeries objects for different data series and their respective covariates.
         Also removes outliers using Median Absolute Deviations and removes features with zero variance.
         """
+
+        logging.info("executing transform_data function")
         try:
             train_data = pd.read_csv(self.datatransformationconfig.train_data)
             test_data = pd.read_csv(self.datatransformationconfig.test_data)
@@ -187,6 +195,7 @@ class DataTransformation:
             joblib.dump(timeseries_data, self.datatransformationconfig.timeseries_data)
             joblib.dump(covariates, self.datatransformationconfig.covariates)
 
+            logging.info("saved timeseries_data and covariates to artifacts")
             logging.info(">>> DATA TRANSFORMATION COMPLETE <<<")
 
         except Exception as e:
@@ -197,3 +206,4 @@ if __name__ == "__main__":
     datatransformation = DataTransformation()
     datatransformation.transform_data()
     datatransformation.split_dataset(number_of_test_days = 15)
+    datatransformation.transform_data()
