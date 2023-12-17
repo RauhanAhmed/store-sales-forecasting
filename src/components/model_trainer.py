@@ -50,3 +50,7 @@ class ModelTrainer:
         except Exception as e:
             logging.info(CustomException(e))
             print(CustomException(e))
+
+if __name__ == "__main__":
+    modeltrainer = ModelTrainer()
+    modeltrainer.train_model()
