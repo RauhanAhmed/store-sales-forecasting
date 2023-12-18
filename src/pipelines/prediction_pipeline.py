@@ -43,9 +43,16 @@ class PredictionPipeline:
                 trained_last_date = oil_model.training_series.end_time()
             )
 
+            if type(covariate) == str:
+                return covariate
+            else:
+                pass
+
             series_name = str((store_nbr, family))
             if series_name not in covariates.keys():
-                return ValueError("Invalid combination of store_nbr and family supplied")
+                return "Invalid combination of store_nbr and family supplied"
+            else:
+                pass
             new_covariates = covariates[series_name].append(covariate)
 
             # generating sales predictions for the supplied forecast horizon

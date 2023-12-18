@@ -17,11 +17,11 @@ def generate_covariates(
     """
 
     if horizon > 30:
-        raise ValueError("Forecast horizon cannot be greater than 30")
+        return "Forecast horizon cannot be greater than 30"
     elif horizon <= 0:
-        raise ValueError("Forecast horizon must be positive")
+        return "Forecast horizon must be positive"
     elif (horizon > len(onpromotion)) | (horizon > len(is_holiday)):
-        raise ValueError("Length mismatch")
+        return "Length mismatch"
     else:
         new_covariates = pd.DataFrame(data = {
             "onpromotion":onpromotion[:horizon],
