@@ -5,6 +5,7 @@ numpy==1.26.2
 scikit-learn==1.3.2
 hampel
 darts==0.27.1
+lightgbm
 pymongo
 python-dotenv
 dvc==3.33.4
