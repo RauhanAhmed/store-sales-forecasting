@@ -35,7 +35,7 @@ jobs:
 
   trigger_webhook:
     name: Trigger app's webhook given by Render Cloud for automatic deployments
-    uses: [push_to_registry]
+    needs: [push_to_registry]
     runs-on: ubuntu-latest
     steps:
       - name: Trigger webhook
