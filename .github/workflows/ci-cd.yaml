@@ -41,4 +41,4 @@ jobs:
       - name: Trigger webhook
         uses: tyrrrz/action-http-request@master
         with:
-          url: {{ secrets.RENDER_WEBHOOK }}
+          url: https://api.render.com/deploy/srv-cm0b0k6g1b2c73cpoc00?key=j3-1NkvxsRA
