@@ -32,3 +32,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  trigger_webhook:
+    name: Trigger app's webhook given by Render Cloud for automatic deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger webhook
+        uses: [tyrrrz/action-http-request@master, push_to_registry]
+        with:
+          url: {{ secrets.RENDER_WEBHOOK }}
