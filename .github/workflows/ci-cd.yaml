@@ -35,9 +35,10 @@ jobs:
 
   trigger_webhook:
     name: Trigger app's webhook given by Render Cloud for automatic deployments
+    uses: [push_to_registry]
     runs-on: ubuntu-latest
     steps:
       - name: Trigger webhook
-        uses: [tyrrrz/action-http-request@master, push_to_registry]
+        uses: tyrrrz/action-http-request@master
         with:
           url: {{ secrets.RENDER_WEBHOOK }}
