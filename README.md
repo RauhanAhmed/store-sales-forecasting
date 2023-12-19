@@ -69,9 +69,9 @@ For deployment of the application via dockers, follow the below steps:
  ```
  docker run -p 8000:8000 <IMAGE_NAME>:<TAG>
  ```
- - Push to DockerHub replacing <DOCKERHUB_USERNAME> and <REPO_NAME> with the dockerhub username and the repository name
+ - Push to DockerHub replacing <DOCKERHUB_USERNAME>, <IMAGE_NAME> and the <TAG> with the dockerhub username, image name and the image tag respectively 
  ```
- docker push <DOCKERHUB_USERNAME>:<REPO_NAME>
+ docker push <DOCKERHUB_USERNAME>/<IMAGE_NAME>:<TAG>
  ```
  - Sign up on [Render Cloud](https://render.com)
  - Create a Web Service on Render and choose to deploy via dockers
