@@ -1,5 +1,5 @@
 
-# Multivariate Data for Dynamic Sales Prediction
+# Dynamic Sales Forecasting with Multiple-Multivariate Time Series
 
 This Python, [ML-based API](https://store-sales-api.onrender.com) empowers retailers with data-driven sales forecasting to optimize inventory management and improve profitability. 
 This comprehensive solution predicts short-term sales (up to 30 days) with outstanding accuracy and performance metrics. By integrating seamlessly with existing workflows, it enables retailers to:
