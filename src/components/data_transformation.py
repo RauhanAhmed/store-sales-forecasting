@@ -21,7 +21,8 @@ class DataTransformationConfig:
     holidays:str = os.path.join("artifacts", "holidays.csv")
     processed_data:str = os.path.join("artifacts", "processed_data.csv")
     train_data:str = os.path.join("artifacts", "train_data.csv")
-    test_data:str = os.path.join("artifacts", "test_data.csv")
+    test_data:str = os.path.join("artifacts", "test_data.joblib")
+    test_data_covariates:str = os.path.join("artifacts", "test_data_covariates.joblib")
     timeseries_data:str = os.path.join("artifacts", "timeseries_data.joblib")
     covariates:str = os.path.join("artifacts", "covariates.joblib")
 
@@ -85,7 +86,7 @@ class DataTransformation:
                 indices = processed_data[((processed_data["date"] == date) & (processed_data["city"] == city))].index
                 processed_data["is_holiday"][indices] = 1
 
-            processed_data.to_csv(self.datatransformationconfig.processed_data)
+            processed_data.to_csv(self.datatransformationconfig.processed_data, index = False)
         
             logging.info("data integration complete")
         
@@ -112,8 +113,8 @@ class DataTransformation:
             train_data = processed_data.iloc[:split_index + 1, :]
             test_data = processed_data.iloc[split_index + 1:, :]
 
-            train_data.to_csv(self.datatransformationconfig.train_data)
-            test_data.to_csv(self.datatransformationconfig.test_data)
+            train_data.to_csv(self.datatransformationconfig.train_data, index = False)
+            joblib.dump(test_data, self.datatransformationconfig.test_data)
         
             logging.info("data split complete")
 
@@ -131,7 +132,7 @@ class DataTransformation:
         logging.info("executing transform_data function")
         try:
             train_data = pd.read_csv(self.datatransformationconfig.train_data)
-            test_data = pd.read_csv(self.datatransformationconfig.test_data)
+            test_data = joblib.load(self.datatransformationconfig.test_data)
 
             train_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
             test_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
@@ -160,6 +161,19 @@ class DataTransformation:
                     covariates[cov].loc[date, :] = [np.NaN] * covariates[cov].shape[1]
                 covariates[cov] = covariates[cov].ffill()  
 
+            logging.info("reformatting test_data")
+
+            test_sales = {}
+            test_covariates = {}
+            for group, data_slice in test_data.groupby(by = ["store_nbr", "family"]):
+                data_slice.set_index("date", drop = True, inplace = True)
+                test_covariate = data_slice[["onpromotion", "dcoilwtico", "is_holiday"]]
+                test_sales_series = data_slice["sales"]
+                test_sales[group] = test_sales_series
+                test_covariates[str(group)] = test_covariate          
+
+            test_data = pd.DataFrame(data = test_sales)
+
             logging.info("detecting and removing outliers from different series")    
 
             temp = series_dataset.apply(lambda x : hampel(x, window_size = 7, n_sigma = 3.0).filtered_data)
@@ -178,24 +192,34 @@ class DataTransformation:
                     constant_features.append(feature)
             features_to_keep = set(series_dataset.columns).difference(set(constant_features))
             series_dataset = series_dataset[features_to_keep]
-            for constant_feature in constant_features:
-                test_data[~((test_data["store_nbr"] == constant_feature[0]) & (test_data["family"] == constant_feature[1]))]
-            series_dataset = series_dataset[sorted(series_dataset.columns)]
 
-            logging.info("converting sales series and covariates into Darta TimeSeries")
+            series_dataset = series_dataset[sorted(series_dataset.columns)]
+            test_data = test_data[series_dataset.columns]
+
+            logging.info("converting sales series and covariates into Darts TimeSeries")
 
             series_dataset.set_index(pd.to_datetime(series_dataset.index), inplace = True)
+            test_data.set_index(pd.to_datetime(test_data.index), inplace = True)
+
             timeseries_data = TimeSeries.from_dataframe(series_dataset)
+            test_data = TimeSeries.from_dataframe(test_data)
 
             for cov_key in covariates:
                 temp_cov = covariates[cov_key]
                 temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
                 covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)
 
+            for cov_key in test_covariates:
+                temp_cov = test_covariates[cov_key]
+                temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
+                test_covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)      
+
             joblib.dump(timeseries_data, self.datatransformationconfig.timeseries_data)
             joblib.dump(covariates, self.datatransformationconfig.covariates)
+            joblib.dump(test_data, self.datatransformationconfig.test_data)
+            joblib.dump(test_covariates, self.datatransformationconfig.test_data_covariates)
 
-            logging.info("saved timeseries_data and covariates to artifacts")
+            logging.info("saved timeseries_data, test_data and covariates to artifacts")
             logging.info(">>> DATA TRANSFORMATION COMPLETE <<<")
 
         except Exception as e:
