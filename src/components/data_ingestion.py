@@ -31,7 +31,7 @@ class DataIngestion:
             logging.info("performing data extraction")
 
             load_dotenv(self.dataingestionconfig.env_file_path)
-    
+
             MONGODB_USERNAME = os.getenv("MONGODB_USERNAME")
             MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
             mongodb_uri = f"mongodb+srv://{MONGODB_USERNAME}:{MONGODB_PASSWORD}@storesales.ba5omuw.mongodb.net/?retryWrites=true&w=majority"
@@ -41,7 +41,7 @@ class DataIngestion:
             oil = pd.DataFrame(client["StoreSales"]["Oil"].find())
             stores = pd.DataFrame(client["StoreSales"]["Stores"].find())
             holidays = pd.DataFrame(client["StoreSales"]["Holidays"].find())
-            
+
             logging.info("data extraction successful")
 
             data.drop("_id", axis = 1, inplace = True)
@@ -57,7 +57,7 @@ class DataIngestion:
 
             logging.info("data saved to artifacts")
             logging.info(">>> DATA INGESTION COMPLETE <<<")
-        
+
         except Exception as e:
             logging.info(CustomException(e))
             print(CustomException(e))

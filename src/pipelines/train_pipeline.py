@@ -1,6 +1,7 @@
 from src.components.data_ingestion import DataIngestion
 from src.components.data_transformation import DataTransformation
 from src.components.model_trainer import ModelTrainer
+from src.components.model_evaluation import ModelEvaluation
 
 if __name__ == "__main__":
     
@@ -14,3 +15,6 @@ if __name__ == "__main__":
 
     modeltrainer = ModelTrainer()
     modeltrainer.train_model()
+
+    train, targets, predictions = modelevaluation = ModelEvaluation()
+    modelevaluation.evaluate_predictions(train, targets, predictions)

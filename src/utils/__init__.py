@@ -34,6 +34,7 @@ def generate_covariates(
         end_date = last_date + timedelta(days = horizon)
         new_indices = pd.date_range(start = start_date, end = end_date)
         new_covariates.set_index(new_indices, inplace = True)
+        new_covariates.index.name = "date"
         new_covariates = TimeSeries.from_dataframe(new_covariates)
 
     return new_covariates

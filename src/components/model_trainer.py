@@ -33,7 +33,8 @@ class ModelTrainer:
             oil_model = LightGBMModel(
                 lags = 25,
                 output_chunk_length = 1,
-                n_estimators = 500
+                n_estimators = 500,
+                verbosity = 0
             )
             oil_model.fit(series = series)
 
@@ -43,8 +44,12 @@ class ModelTrainer:
                 lags = [-1, -2, -6, -7, -8, -13, -14, -15, -20, -21, -27, -28, -35, -42, -49, -56, -63],
                 lags_past_covariates = [-1, -2, -6, -7, -8, -13, -14, -15, -20, -21, -27, -28, -35],
                 output_chunk_length = 1,
-                n_estimators = 1000
+                n_estimators = 1000,
+                verbosity = 0
             )
+
+            logging.info("fitting the LightGBM Model for forecasting sales")
+
             model.fit(
                 series = [timeseries_data[component] for component in timeseries_data.components],
                 past_covariates = [covariates[cov] for cov in timeseries_data.components]

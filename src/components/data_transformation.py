@@ -21,207 +21,216 @@ class DataTransformationConfig:
     holidays:str = os.path.join("artifacts", "holidays.csv")
     processed_data:str = os.path.join("artifacts", "processed_data.csv")
     train_data:str = os.path.join("artifacts", "train_data.csv")
-    test_data:str = os.path.join("artifacts", "test_data.joblib")
-    test_data_covariates:str = os.path.join("artifacts", "test_data_covariates.joblib")
+    test_data:str = os.path.join("artifacts", "test_data.csv")
+    test_covariates:str = os.path.join("artifacts", "test_covariates.joblib")
     timeseries_data:str = os.path.join("artifacts", "timeseries_data.joblib")
+    testseries_data:str = os.path.join("artifacts", "testseries_data.joblib")
     covariates:str = os.path.join("artifacts", "covariates.joblib")
 
 
 class DataTransformation:
-    def __init__(self):
-        self.datatransformationconfig = DataTransformationConfig()
-        logging.info(">>> DATA TRANSFORMATION STARTED <<<")
+  def __init__(self):
+    self.datatransformationconfig = DataTransformationConfig()
+    logging.info(">>> DATA TRANSFORMATION STARTED <<<")
 
-    def integrate_data(self):
-        
-        """
-        Function responsible for integrating the datasets without any inconsistencies
-        """
-        
-        logging.info("executing integrate_data function")
-        try:
-            logging.info("handling missing values")
+  def integrate_data(self):
 
-            oil = pd.read_csv(self.datatransformationconfig.oil)
-            data = pd.read_csv(self.datatransformationconfig.data)
-            stores = pd.read_csv(self.datatransformationconfig.stores)
-            holidays = pd.read_csv(self.datatransformationconfig.holidays)
+    """
+    Function responsible for integrating the datasets without any inconsistencies
+    """
 
-            all_dates = data["date"]
-            missing_dates = pd.DataFrame(all_dates[~all_dates.isin(oil.date)].unique())
-            missing_dates.rename(columns={0:"date"}, inplace=True)
-            oil = pd.concat([oil, missing_dates], axis=0).reset_index(drop=True).sort_values(by="date")
-            oil["dcoilwtico"] = oil["dcoilwtico"].interpolate().bfill()
+    logging.info("executing integrate_data function")
+    try:
+      logging.info("handling missing values")
 
-            logging.info("missing values handled successfully")
-            logging.info("initialising data integration")
+      oil = pd.read_csv(self.datatransformationconfig.oil)
+      data = pd.read_csv(self.datatransformationconfig.data)
+      stores = pd.read_csv(self.datatransformationconfig.stores)
+      holidays = pd.read_csv(self.datatransformationconfig.holidays)
 
-            processed_data = pd.merge(left=data, right=oil, on="date", how="left")
-            processed_data = pd.merge(left = processed_data, right = stores, on = "store_nbr", how = "left")
-            processed_data.rename(columns={"type":"store_type"}, inplace=True)
-            
-            holidays = holidays[holidays["transferred"] != True]
-            holidays.drop(["transferred", "description"], axis = 1, inplace = True)
-            holidays = holidays[holidays["type"] != "Work Day"]
-            holidays.drop("type", axis = 1, inplace = True)
+      all_dates = data["date"]
+      missing_dates = pd.DataFrame(all_dates[~all_dates.isin(oil.date)].unique())
+      missing_dates.rename(columns={0:"date"}, inplace=True)
+      oil = pd.concat([oil, missing_dates], axis=0).reset_index(drop=True).sort_values(by="date")
+      oil["dcoilwtico"] = oil["dcoilwtico"].interpolate().bfill()
 
-            logging.info("removing data inconsistencies")
+      logging.info("missing values handled successfully")
+      logging.info("initialising data integration")
 
-            national_holidays = holidays[holidays["locale"] == "National"][["date"]]
-            regional_holidays = holidays[((holidays["locale"] == "Regional") & (~holidays["date"].isin(national_holidays["date"])))]
-            local_holidays = holidays[((holidays["locale"] == "Local") & (~holidays["date"].isin(national_holidays["date"])))]
-            regional_holidays = regional_holidays[["date", "locale_name"]].rename(columns={"locale_name":"state"})
-            local_holidays = local_holidays[["date", "locale_name"]].rename(columns={"locale_name":"city"})
-            national_holidays = national_holidays[~national_holidays.duplicated(keep='first')]
-            regional_holidays = regional_holidays[~regional_holidays.duplicated(keep="first")]
-            local_holidays = local_holidays[~local_holidays.duplicated(keep="first")]
-            processed_data["is_holiday"] = np.zeros(shape=(len(processed_data), )).astype(int)
+      processed_data = pd.merge(left=data, right=oil, on="date", how="left")
+      processed_data = pd.merge(left = processed_data, right = stores, on = "store_nbr", how = "left")
+      processed_data.rename(columns={"type":"store_type"}, inplace=True)
 
-            national_indices = processed_data[processed_data["date"].isin(national_holidays["date"])].index
-            processed_data["is_holiday"][national_indices] = 1
-            for date, state in zip(regional_holidays["date"], regional_holidays["state"]):
-                indices = processed_data[((processed_data["date"] == date) & (processed_data["state"] == state))].index
-                processed_data["is_holiday"][indices] = 1
-            for date, city in zip(local_holidays["date"], local_holidays["city"]):
-                indices = processed_data[((processed_data["date"] == date) & (processed_data["city"] == city))].index
-                processed_data["is_holiday"][indices] = 1
+      holidays = holidays[holidays["transferred"] != True]
+      holidays.drop(["transferred", "description"], axis = 1, inplace = True)
+      holidays = holidays[holidays["type"] != "Work Day"]
+      holidays.drop("type", axis = 1, inplace = True)
 
-            processed_data.to_csv(self.datatransformationconfig.processed_data, index = False)
-        
-            logging.info("data integration complete")
-        
-        except Exception as e:
-            logging.info(CustomException(e))
-            print(CustomException(e))
+      logging.info("removing data inconsistencies")
 
-    def split_data(self, number_of_test_days = 15):
-        
-        """
-        Function responsible for splitting the data into train and test sets
-        """
+      national_holidays = holidays[holidays["locale"] == "National"][["date"]]
+      regional_holidays = holidays[((holidays["locale"] == "Regional") & (~holidays["date"].isin(national_holidays["date"])))]
+      local_holidays = holidays[((holidays["locale"] == "Local") & (~holidays["date"].isin(national_holidays["date"])))]
+      regional_holidays = regional_holidays[["date", "locale_name"]].rename(columns={"locale_name":"state"})
+      local_holidays = local_holidays[["date", "locale_name"]].rename(columns={"locale_name":"city"})
+      national_holidays = national_holidays[~national_holidays.duplicated(keep='first')]
+      regional_holidays = regional_holidays[~regional_holidays.duplicated(keep="first")]
+      local_holidays = local_holidays[~local_holidays.duplicated(keep="first")]
+      processed_data["is_holiday"] = np.zeros(shape=(len(processed_data), )).astype(int)
 
-        logging.info("executing split_data function")
-        try:     
-            logging.info("performing data split for cross-validation")
+      national_indices = processed_data[processed_data["date"].isin(national_holidays["date"])].index
+      processed_data["is_holiday"][national_indices] = 1
+      for date, state in zip(regional_holidays["date"], regional_holidays["state"]):
+          indices = processed_data[((processed_data["date"] == date) & (processed_data["state"] == state))].index
+          processed_data["is_holiday"][indices] = 1
+      for date, city in zip(local_holidays["date"], local_holidays["city"]):
+          indices = processed_data[((processed_data["date"] == date) & (processed_data["city"] == city))].index
+          processed_data["is_holiday"][indices] = 1
 
-            processed_data = pd.read_csv(self.datatransformationconfig.processed_data)
+      processed_data.sort_values(by = ["date"], inplace = True)
+      processed_data.to_csv(self.datatransformationconfig.processed_data, index = False)
 
-            last_date = processed_data["date"].iloc[- 1]
-            last_date = datetime.strptime(last_date, "%Y-%m-%d") - timedelta(days = number_of_test_days)
-            last_date = last_date.strftime("%Y-%m-%d")
-            split_index = processed_data[processed_data["date"] == last_date].index[-1]
-            train_data = processed_data.iloc[:split_index + 1, :]
-            test_data = processed_data.iloc[split_index + 1:, :]
+      logging.info("data integration complete")
 
-            train_data.to_csv(self.datatransformationconfig.train_data, index = False)
-            joblib.dump(test_data, self.datatransformationconfig.test_data)
-        
-            logging.info("data split complete")
+    except Exception as e:
+      logging.info(CustomException(e))
+      print(CustomException(e))
 
-        except Exception as e:
-            logging.info(CustomException(e))
-            print(CustomException(e))
+  def split_data(self, number_of_test_days = 15):
 
-    def transform_data(self):
-        
-        """
-        Function responsible for creating Darts TimeSeries objects for different data series and their respective covariates.
-        Also removes outliers using Median Absolute Deviations and removes features with zero variance.
-        """
+    """
+    Function responsible for splitting the data into train and test sets
+    """
 
-        logging.info("executing transform_data function")
-        try:
-            train_data = pd.read_csv(self.datatransformationconfig.train_data)
-            test_data = joblib.load(self.datatransformationconfig.test_data)
+    logging.info("executing split_data function")
+    try:
+      logging.info("performing data split for cross-validation")
 
-            train_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
-            test_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
-            
-            logging.info("separating different timeseries and their covariates")
+      processed_data = pd.read_csv(self.datatransformationconfig.processed_data)
+      processed_data.reset_index(drop=True, inplace=True)
 
-            sales = {}
-            covariates = {}
-            for group, data_slice in train_data.groupby(by = ["store_nbr", "family"]):
-                data_slice.set_index("date", drop = True, inplace = True)
-                sales_series = data_slice["sales"]
-                covariate = data_slice[["onpromotion", "dcoilwtico", "is_holiday"]]
-                sales[group] = sales_series
-                covariates[str(group)] = covariate
+      last_date = processed_data["date"].iloc[- 1]
 
-            logging.info("filling missing dates in different series and their covariates")
+      logging.info(f"setting number of kept records for model testing as {number_of_test_days}")
 
-            series_dataset = pd.DataFrame(data = sales)
-            all_dates = set(pd.date_range(start = series_dataset.index[0], end = series_dataset.index[-1]).strftime("%Y-%m-%d"))
-            all_missing_dates = all_dates.difference(set(series_dataset.index))
-            missing_data = pd.DataFrame(data = {column:[np.NaN] * len(all_missing_dates) for column in series_dataset.columns},\
-                                        index = list(all_missing_dates), columns = series_dataset.columns)
-            series_dataset = pd.concat([series_dataset, missing_data], axis = 0).sort_index().interpolate()
-            for cov in covariates:
-                for date in all_missing_dates:
-                    covariates[cov].loc[date, :] = [np.NaN] * covariates[cov].shape[1]
-                covariates[cov] = covariates[cov].ffill()  
+      last_date = datetime.strptime(last_date, "%Y-%m-%d") - timedelta(days = number_of_test_days)
+      last_date = last_date.strftime("%Y-%m-%d")
+      split_index = processed_data[processed_data["date"] == last_date].sort_values(by = "date").index[-1]
+      train_data = processed_data.iloc[:split_index + 1, :]
+      test_data = processed_data.iloc[split_index + 1:, :]
 
-            logging.info("reformatting test_data")
+      train_data.to_csv(self.datatransformationconfig.train_data, index = False)
+      test_data.to_csv(self.datatransformationconfig.test_data, index = False)
 
-            test_sales = {}
-            test_covariates = {}
-            for group, data_slice in test_data.groupby(by = ["store_nbr", "family"]):
-                data_slice.set_index("date", drop = True, inplace = True)
-                test_covariate = data_slice[["onpromotion", "dcoilwtico", "is_holiday"]]
-                test_sales_series = data_slice["sales"]
-                test_sales[group] = test_sales_series
-                test_covariates[str(group)] = test_covariate          
+      logging.info("data split complete")
 
-            test_data = pd.DataFrame(data = test_sales)
+    except Exception as e:
+      logging.info(CustomException(e))
+      print(CustomException(e))
 
-            logging.info("detecting and removing outliers from different series")    
+  def transform_data(self):
 
-            temp = series_dataset.apply(lambda x : hampel(x, window_size = 7, n_sigma = 3.0).filtered_data)
-            series_dataset = temp.set_index(series_dataset.index)                   
+    """
+    Function responsible for creating Darts TimeSeries objects for different data series and their respective covariates.
+    Also removes outliers using Median Absolute Deviations and removes features with zero variance.
+    """
 
-            logging.info("dropping features with zero variances")
+    logging.info("executing transform_data function")
+    try:
+      train_data = pd.read_csv(self.datatransformationconfig.train_data)
+      test_data = pd.read_csv(self.datatransformationconfig.test_data)
 
-            var_threshold = VarianceThreshold(threshold = 0)
-            var_threshold.fit(series_dataset)   
-            const_features_report = var_threshold.get_support()
-            constant_features = []
-            for feature, result in zip(series_dataset.columns, const_features_report):
-                if result == True:
-                    pass
-                else:
-                    constant_features.append(feature)
-            features_to_keep = set(series_dataset.columns).difference(set(constant_features))
-            series_dataset = series_dataset[features_to_keep]
+      logging.info("dropping unnecessary features for modelling")
 
-            series_dataset = series_dataset[sorted(series_dataset.columns)]
-            test_data = test_data[series_dataset.columns]
+      train_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
+      test_data.drop(["id", "city", "store_type", "state", "cluster"], axis = 1, inplace = True)
 
-            logging.info("converting sales series and covariates into Darts TimeSeries")
+      logging.info("separating different timeseries and their covariates in train data")
 
-            series_dataset.set_index(pd.to_datetime(series_dataset.index), inplace = True)
-            test_data.set_index(pd.to_datetime(test_data.index), inplace = True)
+      sales = {}
+      covariates = {}
+      for group, data_slice in train_data.groupby(by = ["store_nbr", "family"]):
+          data_slice.set_index("date", drop = True, inplace = True)
+          sales_series = data_slice["sales"]
+          covariate = data_slice[["onpromotion", "dcoilwtico", "is_holiday"]]
+          sales[group] = sales_series
+          covariates[str(group)] = covariate
 
-            timeseries_data = TimeSeries.from_dataframe(series_dataset)
-            test_data = TimeSeries.from_dataframe(test_data)
+      logging.info("filling missing dates in different series and their covariates")
 
-            for cov_key in covariates:
-                temp_cov = covariates[cov_key]
-                temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
-                covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)
+      series_dataset = pd.DataFrame(data = sales)
 
-            for cov_key in test_covariates:
-                temp_cov = test_covariates[cov_key]
-                temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
-                test_covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)      
+      all_dates = set(pd.date_range(start = series_dataset.index[0], end = series_dataset.index[-1]).strftime("%Y-%m-%d"))
+      all_missing_dates = all_dates.difference(set(series_dataset.index))
+      missing_data = pd.DataFrame(data = {column:[np.NaN] * len(all_missing_dates) for column in series_dataset.columns},\
+                                  index = list(all_missing_dates), columns = series_dataset.columns)
+      series_dataset = pd.concat([series_dataset, missing_data], axis = 0).sort_index().interpolate()
+      for cov in covariates:
+          for date in all_missing_dates:
+              covariates[cov].loc[date, :] = [np.NaN] * covariates[cov].shape[1]
+          covariates[cov] = covariates[cov].ffill()
 
-            joblib.dump(timeseries_data, self.datatransformationconfig.timeseries_data)
-            joblib.dump(covariates, self.datatransformationconfig.covariates)
-            joblib.dump(test_data, self.datatransformationconfig.test_data)
-            joblib.dump(test_covariates, self.datatransformationconfig.test_data_covariates)
+      logging.info("applying same processing on test data performed above")
 
-            logging.info("saved timeseries_data, test_data and covariates to artifacts")
-            logging.info(">>> DATA TRANSFORMATION COMPLETE <<<")
+      test_sales = {}
+      test_covariates = {}
+      for group, data_slice in test_data.groupby(by = ["store_nbr", "family"]):
+        data_slice.set_index("date", drop = True, inplace = True)
+        test_covariate = data_slice[["onpromotion", "dcoilwtico", "is_holiday"]]
+        test_sales_series = data_slice["sales"]
+        test_sales[group] = test_sales_series
+        test_covariates[str(group)] = test_covariate
 
-        except Exception as e:
-            logging.info(CustomException(e))
-            print(CustomException(e))
+      test_dataset = pd.DataFrame(data = test_sales)
+
+      logging.info("detecting and removing outliers from different series")
+
+      temp = series_dataset.apply(lambda x : hampel(x, window_size = 7, n_sigma = 3.0).filtered_data)
+      series_dataset = temp.set_index(series_dataset.index)
+
+      logging.info("dropping features with zero variances from train and test data")
+
+      var_threshold = VarianceThreshold(threshold = 0)
+      var_threshold.fit(series_dataset)
+      const_features_report = var_threshold.get_support()
+      constant_features = []
+      for feature, result in zip(series_dataset.columns, const_features_report):
+        if result == True:
+          pass
+        else:
+          constant_features.append(feature)
+      features_to_keep = sorted(set(series_dataset.columns).difference(set(constant_features)))
+      series_dataset = series_dataset[features_to_keep]
+      test_dataset = test_dataset[features_to_keep]
+
+      logging.info("converting sales series and covariates into Darts TimeSeries objects for train and test data")
+
+      series_dataset.set_index(pd.to_datetime(series_dataset.index), inplace = True)
+      test_dataset.set_index(pd.to_datetime(test_dataset.index), inplace = True)
+
+      timeseries_data = TimeSeries.from_dataframe(series_dataset)
+      testseries_data = TimeSeries.from_dataframe(test_dataset)
+
+      for cov_key in covariates:
+        temp_cov = covariates[cov_key]
+        temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
+        covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)
+
+      for cov_key in test_covariates:
+        temp_cov = test_covariates[cov_key]
+        temp_cov.set_index(pd.to_datetime(temp_cov.index), inplace = True)
+        test_covariates[cov_key] = TimeSeries.from_dataframe(temp_cov)
+
+      logging.info("saving the processed datasets of all target series and their covariates via joblib to artifacts")
+
+      joblib.dump(timeseries_data, self.datatransformationconfig.timeseries_data)
+      joblib.dump(covariates, self.datatransformationconfig.covariates)
+      joblib.dump(testseries_data, self.datatransformationconfig.testseries_data)
+      joblib.dump(test_covariates, self.datatransformationconfig.test_covariates)
+
+      logging.info("saved timeseries_data, test_data and their covariates to artifacts")
+      logging.info(">>> DATA TRANSFORMATION COMPLETE <<<")
+
+    except Exception as e:
+      logging.info(CustomException(e))
+      print(CustomException(e))
