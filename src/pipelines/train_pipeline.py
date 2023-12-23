@@ -16,5 +16,6 @@ if __name__ == "__main__":
     modeltrainer = ModelTrainer()
     modeltrainer.train_model()
 
-    train, targets, predictions = modelevaluation = ModelEvaluation()
+    modelevaluation = ModelEvaluation()
+    train, targets, predictions = modelevaluation.generate_predictions()
     modelevaluation.evaluate_predictions(train, targets, predictions)
